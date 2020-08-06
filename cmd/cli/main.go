@@ -7,6 +7,8 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+
+	"github.com/maliur/cardmarket/oauth"
 )
 
 type Article struct {
@@ -49,14 +51,14 @@ type Orders struct {
 	Orders []Order `json:"order"`
 }
 
-func Get(url string, config Config) (*http.Response, error) {
+func Get(url string, config oauth.Config) (*http.Response, error) {
 	client := &http.Client{}
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return nil, err
 	}
 
-	req.Header.Add("Authorization", OauthHeader(url, config))
+	req.Header.Add("Authorization", oauth.OauthHeader(url, config))
 	req.Header.Add("Accept", "*/*")
 
 	resp, err := client.Do(req)
@@ -68,7 +70,7 @@ func Get(url string, config Config) (*http.Response, error) {
 }
 
 func main() {
-	var config Config
+	var config oauth.Config
 	jsonFile, err := os.Open("config.json")
 	if err != nil {
 		fmt.Println(err)
