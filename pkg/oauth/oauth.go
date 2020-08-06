@@ -80,7 +80,8 @@ func SigningKey(appSecret, accessTokenSecret string) string {
 
 func AuthSignature(baseString, signingKey string) string {
 	h := hmac.New(sha1.New, []byte(signingKey))
-	h.Write([]byte(baseString))
+	h.Write([]byte(baseString)) //nolint
+
 	signature := base64.StdEncoding.EncodeToString(h.Sum(nil))
 
 	return signature

@@ -48,6 +48,9 @@ func get(url string, config oauth.Config) (*http.Response, error) {
 
 func (s *service) GetSentOrders() ([]Order, error) {
 	resp, err := get(baseUrl+"/orders/buyer/sent", s.c)
+	if err != nil {
+		return nil, err
+	}
 
 	var data Orders
 	err = json.NewDecoder(resp.Body).Decode(&data)
@@ -60,6 +63,9 @@ func (s *service) GetSentOrders() ([]Order, error) {
 
 func (s *service) GetPaidOrders() ([]Order, error) {
 	resp, err := get(baseUrl+"/orders/buyer/paid", s.c)
+	if err != nil {
+		return nil, err
+	}
 
 	var data Orders
 	err = json.NewDecoder(resp.Body).Decode(&data)
