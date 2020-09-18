@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -13,16 +12,9 @@ import (
 )
 
 func main() {
-	var config oauth.Config
-	jsonFile, err := os.Open("config.json")
+	config, err := getConfig()
 	if err != nil {
-		fmt.Println(err)
-	}
-	defer jsonFile.Close()
-
-	err = json.NewDecoder(jsonFile).Decode(&config)
-	if err != nil {
-		log.Fatalf("could not unmarshal config: %v", err)
+		log.Fatalf("Failed to read config: %s", err)
 	}
 
 	l := listing.NewService(config)
@@ -30,4 +22,32 @@ func main() {
 
 	log.Println("Server is running on: http://localhost:8080")
 	log.Fatal(http.ListenAndServe(":8080", router))
+}
+
+func getConfig() (oauth.Config, error) {
+	token, present := os.LookupEnv("APP_TOKEN")
+	if !present {
+		return oauth.Config{}, fmt.Errorf("env variable APP_TOKEN not found")
+	}
+	secret, present := os.LookupEnv("APP_SECRET")
+	if !present {
+		return oauth.Config{}, fmt.Errorf("env variable APP_SECRET not found")
+	}
+	accessToken, present := os.LookupEnv("ACCESS_TOKEN")
+	if !present {
+		return oauth.Config{}, fmt.Errorf("env variable ACCESS_TOKEN not found")
+	}
+	accessSecret, present := os.LookupEnv("ACCESS_TOKEN_SECRET")
+	if !present {
+		return oauth.Config{}, fmt.Errorf("env variable ACCESS_TOKEN_SECRET not found")
+	}
+
+	config := oauth.Config{
+		ConsumerKey:       token,
+		ConsumerSecret:    secret,
+		AccessToken:       accessToken,
+		AccessTokenSecret: accessSecret,
+	}
+
+	return config, nil
 }
