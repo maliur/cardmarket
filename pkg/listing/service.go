@@ -7,12 +7,7 @@ import (
 	"github.com/maliur/cardmarket/pkg/oauth"
 )
 
-// max, _ := strconv.Atoi(resp.Header.Get("X-Request-Limit-Max"))
-// used, _ := strconv.Atoi(resp.Header.Get("X-Request-Limit-Count"))
-// left := max - used
-// fmt.Println("Request left today:", left)
-
-var baseUrl string = "https://api.cardmarket.com/ws/v2.0/output.json"
+var baseUrl = "https://api.cardmarket.com/ws/v2.0/output.json"
 
 type Service interface {
 	GetSentOrders() ([]Order, error)
