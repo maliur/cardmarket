@@ -2,35 +2,44 @@ package rest
 
 import (
 	"encoding/json"
-	"log"
+	"github.com/gorilla/mux"
+	"github.com/hashicorp/go-hclog"
 	"net/http"
 	"time"
 
-	"github.com/julienschmidt/httprouter"
 	"github.com/maliur/cardmarket/pkg/listing"
 )
 
-func logger(fn func(w http.ResponseWriter, r *http.Request, param httprouter.Params)) func(w http.ResponseWriter, r *http.Request, param httprouter.Params) {
-	return func(w http.ResponseWriter, r *http.Request, param httprouter.Params) {
-		start := time.Now()
-		log.Printf("%s %s", r.Method, r.URL.Path)
-		fn(w, r, param)
-		log.Printf("Done in %v (%s %s)", time.Since(start), r.Method, r.URL.Path)
+func loggingMiddleware(l hclog.Logger) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		fn := func(w http.ResponseWriter, r *http.Request) {
+			start := time.Now()
+			l.Debug("Incoming", "method", r.Method, "path", r.URL.Path)
+			next.ServeHTTP(w, r)
+			l.Debug("Took", "ms", time.Since(start), "method", r.Method, "path", r.URL.Path)
+		}
+
+		return http.HandlerFunc(fn)
 	}
 }
 
-func NewRouter(l listing.Service) http.Handler {
-	r := httprouter.New()
+func NewRouter(l hclog.Logger, ls listing.Service) *mux.Router {
+	r := mux.NewRouter()
+	r.HandleFunc("/order/paid", getPaidOrders(ls))
+	r.HandleFunc("/order/sent", getSentOrders(ls))
 
-	r.GET("/order/paid", logger(getPaidOrders(l)))
-	r.GET("/order/sent", logger(getSentOrders(l)))
+	if l.IsDebug() {
+		r.Use(loggingMiddleware(l))
+	}
 
 	return r
 }
 
-func getPaidOrders(l listing.Service) func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-	return func(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
-		orders, err := l.GetPaidOrders()
+// Orders
+// TODO: Extract this into a separate file
+func getPaidOrders(ls listing.Service) http.HandlerFunc {
+	return func (w http.ResponseWriter, _ *http.Request) {
+		orders, err := ls.GetPaidOrders()
 		if err != nil {
 			http.Error(w, "Something went wrong", http.StatusInternalServerError)
 			return
@@ -43,9 +52,9 @@ func getPaidOrders(l listing.Service) func(w http.ResponseWriter, r *http.Reques
 	}
 }
 
-func getSentOrders(l listing.Service) func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-	return func(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
-		orders, err := l.GetSentOrders()
+func getSentOrders(ls listing.Service) http.HandlerFunc {
+	return func(w http.ResponseWriter, _ *http.Request) {
+		orders, err := ls.GetSentOrders()
 		if err != nil {
 			http.Error(w, "Something went wrong", http.StatusInternalServerError)
 			return

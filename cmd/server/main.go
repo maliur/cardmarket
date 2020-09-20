@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"log"
+	"github.com/hashicorp/go-hclog"
 	"net/http"
 	"os"
 
@@ -12,33 +12,36 @@ import (
 )
 
 func main() {
+	l := hclog.Default()
+	l.SetLevel(hclog.Debug)
+
 	config, err := getConfig()
 	if err != nil {
-		log.Fatalf("Failed to read config: %s", err)
+		l.Error("Failed to read config: ", "error", err)
 	}
 
-	l := listing.NewService(config)
-	router := rest.NewRouter(l)
+	ls := listing.NewService(config)
+	r := rest.NewRouter(l, ls)
 
-	log.Println("Server is running on: http://localhost:8080")
-	log.Fatal(http.ListenAndServe(":8080", router))
+	l.Info("Server is running on: http://localhost:8080")
+	l.Error("Failed to start server", http.ListenAndServe(":8080", r))
 }
 
 func getConfig() (oauth.Config, error) {
-	token, present := os.LookupEnv("APP_TOKEN")
-	if !present {
+	token, ok := os.LookupEnv("APP_TOKEN")
+	if !ok {
 		return oauth.Config{}, fmt.Errorf("env variable APP_TOKEN not found")
 	}
-	secret, present := os.LookupEnv("APP_SECRET")
-	if !present {
+	secret, ok := os.LookupEnv("APP_SECRET")
+	if !ok {
 		return oauth.Config{}, fmt.Errorf("env variable APP_SECRET not found")
 	}
-	accessToken, present := os.LookupEnv("ACCESS_TOKEN")
-	if !present {
+	accessToken, ok := os.LookupEnv("ACCESS_TOKEN")
+	if !ok {
 		return oauth.Config{}, fmt.Errorf("env variable ACCESS_TOKEN not found")
 	}
-	accessSecret, present := os.LookupEnv("ACCESS_TOKEN_SECRET")
-	if !present {
+	accessSecret, ok := os.LookupEnv("ACCESS_TOKEN_SECRET")
+	if !ok {
 		return oauth.Config{}, fmt.Errorf("env variable ACCESS_TOKEN_SECRET not found")
 	}
 
