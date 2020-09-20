@@ -17,7 +17,8 @@ func main() {
 
 	config, err := getConfig()
 	if err != nil {
-		l.Error("Failed to read config: ", "error", err)
+		l.Error("Failed to read config", "error", err)
+		os.Exit(1)
 	}
 
 	ls := listing.NewService(config)

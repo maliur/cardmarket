@@ -14,9 +14,9 @@ func loggingMiddleware(l hclog.Logger) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		fn := func(w http.ResponseWriter, r *http.Request) {
 			start := time.Now()
-			l.Debug("Incoming", "method", r.Method, "path", r.URL.Path)
+			l.Debug("", "method", r.Method, "path", r.URL.Path)
 			next.ServeHTTP(w, r)
-			l.Debug("Took", "ms", time.Since(start), "method", r.Method, "path", r.URL.Path)
+			l.Debug("","method", r.Method, "path", r.URL.Path, "duration", time.Since(start))
 		}
 
 		return http.HandlerFunc(fn)
